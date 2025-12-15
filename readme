@@ -1,0 +1,197 @@
+Got it. Here’s a clear, professional **README.md** section you can drop straight into your repo — this will explain to any dev (or your future self) how to connect your websites or apps to your Render-hosted OpenVoice Gateway API.
+
+---
+
+## 🧬 OpenVoice + OpenAI Voice Gateway API
+
+This API unifies **text-to-speech (TTS)**, **speech-to-text (STT)**, and **voice cloning** features into one simple HTTP service.
+It’s hosted on **Render** and powered by **FastAPI + FFmpeg + OpenAI + OpenVoice**.
+
+---
+
+### 🌐 **Base URL**
+
+```
+https://<your-service-name>.onrender.com
+```
+
+Example (if deployed at Render):
+
+```
+https://ffmpeg-9xhs.onrender.com
+```
+
+---
+
+## 🔊 **Endpoints**
+
+### **1️⃣ Text to Speech (TTS)**
+
+**Endpoint:**
+
+```
+POST /openvoice/tts
+```
+
+**Description:** Converts input text to spoken audio using OpenAI’s `gpt-4o-mini-tts` model.
+
+**Form Data:**
+
+| Field  | Type   | Required | Description                      |
+| ------ | ------ | -------- | -------------------------------- |
+| `text` | string | ✅        | The text you want to synthesize. |
+
+**Example Request (curl):**
+
+```bash
+curl -X POST -F "text=Hello world from OpenVoice" \
+https://ffmpeg-9xhs.onrender.com/openvoice/tts -o output.mp3
+```
+
+**Response:** Returns an `audio/mpeg` file stream.
+
+**Example in JavaScript:**
+
+```js
+async function speak(text) {
+  const formData = new FormData();
+  formData.append("text", text);
+
+  const res = await fetch("https://ffmpeg-9xhs.onrender.com/openvoice/tts", {
+    method: "POST",
+    body: formData,
+  });
+
+  const audioBlob = await res.blob();
+  const audioUrl = URL.createObjectURL(audioBlob);
+  new Audio(audioUrl).play();
+}
+
+speak("Welcome to OpenVoice");
+```
+
+---
+
+### **2️⃣ Speech to Text (STT)**
+
+**Endpoint:**
+
+```
+POST /openvoice/stt
+```
+
+**Description:** Transcribes spoken audio to text using OpenAI’s Whisper model.
+
+**Form Data:**
+
+| Field  | Type           | Required | Description            |
+| ------ | -------------- | -------- | ---------------------- |
+| `file` | file (WAV/MP3) | ✅        | The speech audio file. |
+
+**Example Request (curl):**
+
+```bash
+curl -X POST -F "file=@sample.wav" \
+https://ffmpeg-9xhs.onrender.com/openvoice/stt
+```
+
+**Response:**
+
+```json
+{
+  "text": "this is a test"
+}
+```
+
+**Example in JavaScript:**
+
+```js
+async function transcribe(audioFile) {
+  const formData = new FormData();
+  formData.append("file", audioFile);
+
+  const res = await fetch("https://ffmpeg-9xhs.onrender.com/openvoice/stt", {
+    method: "POST",
+    body: formData,
+  });
+
+  const result = await res.json();
+  console.log(result.text);
+}
+```
+
+---
+
+### **3️⃣ Voice Conversion (OpenVoice)**
+
+**Endpoint:**
+
+```
+POST /openvoice/convert
+```
+
+**Description:** Takes a **reference voice** and a **target voice** (speech content), and returns a revoiced version.
+⚙️ This currently uses a placeholder function but can be wired to your OpenVoice model when ready.
+
+**Form Data:**
+
+| Field       | Type           | Required | Description                         |
+| ----------- | -------------- | -------- | ----------------------------------- |
+| `reference` | file (WAV/MP3) | ✅        | Reference voice (the voice style).  |
+| `target`    | file (WAV/MP3) | ✅        | Target speech (content to revoice). |
+
+**Example Request (curl):**
+
+```bash
+curl -X POST \
+-F "reference=@ref.wav" \
+-F "target=@speech.wav" \
+https://ffmpeg-9xhs.onrender.com/openvoice/convert \
+-o converted.wav
+```
+
+**Response:** Returns a `converted.wav` file (for now, same as target file until model is added).
+
+---
+
+## ⚙️ **Environment Variables**
+
+Set these in your Render service’s dashboard under **Environment → Add Environment Variable**:
+
+| Variable         | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `OPENAI_API_KEY` | Your OpenAI API key (required for TTS + STT). |
+
+---
+
+## 🧰 **Local Development (optional)**
+
+To run locally:
+
+```bash
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Then visit:
+
+```
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## 🧩 **Next Steps**
+
+Once you’ve confirmed all endpoints work:
+
+1. Integrate your OpenVoice model into `openvoice_api/voice_engine.py` → `convert_voice()`.
+2. Add optional caching or speaker profiles.
+3. Connect this API to your other websites using HTTPS fetch calls.
+
+---
+
+Would you like me to also write the **frontend integration template** (a ready-to-paste HTML + JS widget that connects to your Render endpoints so users can record, transcribe, and play TTS responses)?
+It’s a great next step if you want a live demo UI.
+
+[Catch the Quantum Wave... Password: spinor](https://pulsr.co.uk/spinor.html)
