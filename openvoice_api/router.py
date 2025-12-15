@@ -1,10 +1,26 @@
-from fastapi import APIRouter, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, UploadFile, Form
+from fastapi.responses import Response, FileResponse
 import tempfile
-from .voice_engine import normalize_audio, convert_voice
+from .voice_engine import text_to_speech, speech_to_text, convert_voice, normalize_audio
 
-router = APIRouter(prefix="/openvoice")
+router = APIRouter(prefix="/openvoice", tags=["OpenVoice API"])
 
+# 🟣 Text → Speech (OpenAI TTS)
+@router.post("/tts")
+async def tts(text: str = Form(...)):
+    audio_bytes = text_to_speech(text)
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+
+# 🟢 Speech → Text (OpenAI Whisper)
+@router.post("/stt")
+async def stt(file: UploadFile):
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+    result_text = speech_to_text(tmp_path)
+    return {"text": result_text}
+
+# 🔵 Voice Conversion (OpenVoice)
 @router.post("/convert")
 async def convert(reference: UploadFile, target: UploadFile):
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -18,11 +34,11 @@ async def convert(reference: UploadFile, target: UploadFile):
         with open(tgt_path, "wb") as f:
             f.write(await target.read())
 
-        # Normalize both using ffmpeg
+        # Normalize audio
         normalize_audio(ref_path, ref_path)
         normalize_audio(tgt_path, tgt_path)
 
-        # Run OpenVoice (placeholder)
+        # Placeholder for OpenVoice model
         convert_voice(ref_path, tgt_path, out_path)
 
         return FileResponse(out_path, media_type="audio/wav", filename="converted.wav")
