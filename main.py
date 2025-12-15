@@ -4,6 +4,10 @@ import subprocess
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "FastAPI is live. Try /docs or /ffmpeg"}
+
 @app.get("/health")
 def health():
     return {"ok": True}
@@ -14,6 +18,5 @@ def ffmpeg_check():
     if not ffmpeg_path:
         return {"ffmpeg_found": False, "path": None}
 
-    # Get version (safe + useful)
-    out = subprocess.check_output(["ffmpeg", "-version"], text=True).splitlines()[0]
-    return {"ffmpeg_found": True, "path": ffmpeg_path, "version_line": out}
+    version_line = subprocess.check_output(["ffmpeg", "-version"], text=True).splitlines()[0]
+    return {"ffmpeg_found": True, "path": ffmpeg_path, "version_line": version_line}
